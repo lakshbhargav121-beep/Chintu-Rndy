@@ -11,22 +11,15 @@ ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 -- Main Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
-MainFrame.Size = UDim2.new(0, 280, 0, 400) -- Increased height slightly to fit more buttons
+MainFrame.Size = UDim2.new(0, 280, 0, 400)
 MainFrame.Position = UDim2.new(0.5, -140, 0.5, -200)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MainFrame.BorderSizePixel = 0
-
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
 
 local Stroke = Instance.new("UIStroke", MainFrame)
 Stroke.Color = Color3.fromRGB(255, 0, 0)
 Stroke.Thickness = 2
-
-local Gradient = Instance.new("UIGradient", MainFrame)
-Gradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(25,25,25)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(45,45,45))
-}
 
 -- Title Bar
 local TitleBar = Instance.new("Frame")
@@ -38,12 +31,30 @@ Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0,12)
 
 local Title = Instance.new("TextLabel")
 Title.Parent = TitleBar
-Title.Size = UDim2.new(1,0,1,0)
+Title.Size = UDim2.new(1,-40,1,0) -- Leave space for minimize button
 Title.BackgroundTransparency = 1
 Title.Text = "🔥 CHINTU RNDY"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 18
 Title.TextColor3 = Color3.fromRGB(255,255,255)
+
+-- Minimize Button
+local MinBtn = Instance.new("TextButton")
+MinBtn.Parent = TitleBar
+MinBtn.Size = UDim2.new(0, 30, 0, 30)
+MinBtn.Position = UDim2.new(1, -35, 0, 5)
+MinBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+MinBtn.Text = "-"
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 6)
+
+local minimized = false
+MinBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    MainFrame.Size = minimized and UDim2.new(0, 280, 0, 40) or UDim2.new(0, 280, 0, 400)
+    MinBtn.Text = minimized and "+" or "-"
+end)
 
 -- Button Creator
 local function CreateButton(text,y)
@@ -63,57 +74,12 @@ local function CreateButton(text,y)
     return Btn
 end
 
--- Create Buttons
 local AutoPick = CreateButton("🌱 Auto Pick : OFF", 0.13)
 local AutoSell = CreateButton("💰 Auto Sell : OFF", 0.25)
 local AutoHarvest = CreateButton("🍀 Auto Harvest : OFF", 0.37)
 local AutoGold = CreateButton("🟡 Gold Seed : OFF", 0.49)
 local AutoRainbow = CreateButton("🌈 Rainbow Seed : OFF", 0.61)
 local AutoStock = CreateButton("🛒 Stock Watch : OFF", 0.73)
-
--- Watermark
-local Watermark = Instance.new("TextLabel")
-Watermark.Parent = MainFrame
-Watermark.Size = UDim2.new(1,0,0,25)
-Watermark.Position = UDim2.new(0,0,1,-30)
-Watermark.BackgroundTransparency = 1
-Watermark.Text = "Made by Chintu Dad"
-Watermark.Font = Enum.Font.Gotham
-Watermark.TextSize = 12
-Watermark.TextColor3 = Color3.fromRGB(170,170,170)
-
--- Toggles
-local picking, selling, harvesting, gold, rainbow, stock = false, false, false, false, false, false
-
-AutoPick.MouseButton1Click:Connect(function()
-    picking = not picking
-    AutoPick.Text = "🌱 Auto Pick : "..(picking and "ON" or "OFF")
-end)
-
-AutoSell.MouseButton1Click:Connect(function()
-    selling = not selling
-    AutoSell.Text = "💰 Auto Sell : "..(selling and "ON" or "OFF")
-end)
-
-AutoHarvest.MouseButton1Click:Connect(function()
-    harvesting = not harvesting
-    AutoHarvest.Text = "🍀 Auto Harvest : "..(harvesting and "ON" or "OFF")
-end)
-
-AutoGold.MouseButton1Click:Connect(function()
-    gold = not gold
-    AutoGold.Text = "🟡 Gold Seed : "..(gold and "ON" or "OFF")
-end)
-
-AutoRainbow.MouseButton1Click:Connect(function()
-    rainbow = not rainbow
-    AutoRainbow.Text = "🌈 Rainbow Seed : "..(rainbow and "ON" or "OFF")
-end)
-
-AutoStock.MouseButton1Click:Connect(function()
-    stock = not stock
-    AutoStock.Text = "🛒 Stock Watch : "..(stock and "ON" or "OFF")
-end)
 
 -- Dragging Logic
 local Dragging, DragStart, StartPos
