@@ -1,94 +1,108 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local VirtualUser = game:GetService("VirtualUser")
 local LocalPlayer = Players.LocalPlayer
 
 -- UI Setup
-local ScreenGui = Instance.new("ScreenGui")
+local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
 ScreenGui.Name = "ChintuRndy"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- Main Frame
-local MainFrame = Instance.new("Frame")
-MainFrame.Parent = ScreenGui
+local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 280, 0, 400)
 MainFrame.Position = UDim2.new(0.5, -140, 0.5, -200)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.BorderSizePixel = 0
-MainFrame.ClipsDescendants = true -- Yeh important hai takki minimize pe extra cheezein na dikhein
+MainFrame.ClipsDescendants = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
 
 local Stroke = Instance.new("UIStroke", MainFrame)
 Stroke.Color = Color3.fromRGB(255, 0, 0)
 Stroke.Thickness = 2
 
--- Title Bar
-local TitleBar = Instance.new("Frame")
-TitleBar.Parent = MainFrame
+local TitleBar = Instance.new("Frame", MainFrame)
 TitleBar.Size = UDim2.new(1,0,0,40)
 TitleBar.BackgroundColor3 = Color3.fromRGB(35,35,35)
-TitleBar.BorderSizePixel = 0
 Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0,12)
 
-local Title = Instance.new("TextLabel")
-Title.Parent = TitleBar
+local Title = Instance.new("TextLabel", TitleBar)
 Title.Size = UDim2.new(1,-40,1,0)
 Title.BackgroundTransparency = 1
 Title.Text = "🔥 CHINTU RNDY"
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 18
 Title.TextColor3 = Color3.fromRGB(255,255,255)
 
--- Button Holder (Sare buttons iske andar daalenge)
-local ButtonContainer = Instance.new("Frame")
-ButtonContainer.Parent = MainFrame
+local ButtonContainer = Instance.new("Frame", MainFrame)
 ButtonContainer.Size = UDim2.new(1, 0, 1, -40)
 ButtonContainer.Position = UDim2.new(0, 0, 0, 40)
 ButtonContainer.BackgroundTransparency = 1
 
--- Minimize Button
-local MinBtn = Instance.new("TextButton")
-MinBtn.Parent = TitleBar
+local MinBtn = Instance.new("TextButton", TitleBar)
 MinBtn.Size = UDim2.new(0, 30, 0, 30)
 MinBtn.Position = UDim2.new(1, -35, 0, 5)
 MinBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 MinBtn.Text = "-"
-MinBtn.Font = Enum.Font.GothamBold
-MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 6)
-
 local minimized = false
 MinBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
     MainFrame.Size = minimized and UDim2.new(0, 280, 0, 40) or UDim2.new(0, 280, 0, 400)
-    ButtonContainer.Visible = not minimized -- Minimize hone par buttons hide ho jayenge
+    ButtonContainer.Visible = not minimized
     MinBtn.Text = minimized and "+" or "-"
 end)
 
--- Button Creator (ab ye ButtonContainer mein jayenge)
-local function CreateButton(text, y)
-    local Btn = Instance.new("TextButton")
-    Btn.Parent = ButtonContainer
+-- Automation States
+local states = {AutoPick=false, AutoSell=false, AutoHarvest=false, GoldSeed=false, RainbowSeed=false, StockWatch=false}
+
+local function CreateButton(text, y, stateKey)
+    local Btn = Instance.new("TextButton", ButtonContainer)
     Btn.Size = UDim2.new(0.9,0,0,35)
     Btn.Position = UDim2.new(0.05,0,y,0)
     Btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    Btn.BorderSizePixel = 0
     Btn.Text = text
     Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 14
     Btn.TextColor3 = Color3.fromRGB(255,255,255)
     Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,8)
-    local BtnStroke = Instance.new("UIStroke", Btn)
-    BtnStroke.Color = Color3.fromRGB(255,0,0)
-    return Btn
+    
+    Btn.MouseButton1Click:Connect(function()
+        states[stateKey] = not states[stateKey]
+        Btn.Text = text:split(":")[1] .. ": " .. (states[stateKey] and "ON" or "OFF")
+    end)
 end
 
-CreateButton("🌱 Auto Pick : OFF", 0.05)
-CreateButton("💰 Auto Sell : OFF", 0.18)
-CreateButton("🍀 Auto Harvest : OFF", 0.31)
-CreateButton("🟡 Gold Seed : OFF", 0.44)
-CreateButton("🌈 Rainbow Seed : OFF", 0.57)
-CreateButton("🛒 Stock Watch : OFF", 0.70)
+CreateButton("🌱 Auto Pick : OFF", 0.05, "AutoPick")
+CreateButton("💰 Auto Sell : OFF", 0.18, "AutoSell")
+CreateButton("🍀 Auto Harvest : OFF", 0.31, "AutoHarvest")
+CreateButton("🟡 Gold Seed : OFF", 0.44, "GoldSeed")
+CreateButton("🌈 Rainbow Seed : OFF", 0.57, "RainbowSeed")
+CreateButton("🛒 Stock Watch : OFF", 0.70, "StockWatch")
+
+-- Automation Logic Loop
+RunService.Heartbeat:Connect(function()
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = LocalPlayer.Character.HumanoidRootPart
+
+    -- Anti-AFK
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+
+    -- Auto Pick Logic
+    if states.AutoPick and workspace:FindFirstChild("Seeds") then
+        for _, s in pairs(workspace.Seeds:GetChildren()) do
+            if s:IsA("BasePart") then s.CFrame = hrp.CFrame end
+        end
+    end
+
+    -- Auto Harvest Logic
+    if states.AutoHarvest and workspace:FindFirstChild("Plots") then
+        for _, p in pairs(workspace.Plots:GetChildren()) do
+            if p:FindFirstChild("ClickDetector") then fireclickdetector(p.ClickDetector) end
+        end
+    end
+
+    -- Auto Sell Logic
+    if states.AutoSell and workspace:FindFirstChild("Shop") and workspace.Shop:FindFirstChild("SellPart") then
+        hrp.CFrame = workspace.Shop.SellPart.CFrame
+    end
+end)
 
 -- Dragging Logic
 local Dragging, DragStart, StartPos
