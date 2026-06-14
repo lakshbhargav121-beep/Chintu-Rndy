@@ -7,7 +7,6 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ChintuRndy"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-ScreenGui.Enabled = true -- Yeh ensure karta hai ki panel dikhe
 
 -- Main Frame
 local MainFrame = Instance.new("Frame")
@@ -16,7 +15,7 @@ MainFrame.Size = UDim2.new(0, 280, 0, 400)
 MainFrame.Position = UDim2.new(0.5, -140, 0.5, -200)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MainFrame.BorderSizePixel = 0
-MainFrame.Visible = true -- Panel ko visible rakha hai
+MainFrame.ClipsDescendants = true -- Yeh important hai takki minimize pe extra cheezein na dikhein
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
 
 local Stroke = Instance.new("UIStroke", MainFrame)
@@ -40,7 +39,14 @@ Title.Font = Enum.Font.GothamBold
 Title.TextSize = 18
 Title.TextColor3 = Color3.fromRGB(255,255,255)
 
--- Minimize/Maximize Button
+-- Button Holder (Sare buttons iske andar daalenge)
+local ButtonContainer = Instance.new("Frame")
+ButtonContainer.Parent = MainFrame
+ButtonContainer.Size = UDim2.new(1, 0, 1, -40)
+ButtonContainer.Position = UDim2.new(0, 0, 0, 40)
+ButtonContainer.BackgroundTransparency = 1
+
+-- Minimize Button
 local MinBtn = Instance.new("TextButton")
 MinBtn.Parent = TitleBar
 MinBtn.Size = UDim2.new(0, 30, 0, 30)
@@ -54,15 +60,15 @@ Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 6)
 local minimized = false
 MinBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
-    -- Buttons aur content ko hide/show karne ke liye size change ki hai
     MainFrame.Size = minimized and UDim2.new(0, 280, 0, 40) or UDim2.new(0, 280, 0, 400)
+    ButtonContainer.Visible = not minimized -- Minimize hone par buttons hide ho jayenge
     MinBtn.Text = minimized and "+" or "-"
 end)
 
--- Button Creator
+-- Button Creator (ab ye ButtonContainer mein jayenge)
 local function CreateButton(text, y)
     local Btn = Instance.new("TextButton")
-    Btn.Parent = MainFrame
+    Btn.Parent = ButtonContainer
     Btn.Size = UDim2.new(0.9,0,0,35)
     Btn.Position = UDim2.new(0.05,0,y,0)
     Btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
@@ -77,13 +83,12 @@ local function CreateButton(text, y)
     return Btn
 end
 
--- Create Buttons
-CreateButton("🌱 Auto Pick : OFF", 0.13)
-CreateButton("💰 Auto Sell : OFF", 0.25)
-CreateButton("🍀 Auto Harvest : OFF", 0.37)
-CreateButton("🟡 Gold Seed : OFF", 0.49)
-CreateButton("🌈 Rainbow Seed : OFF", 0.61)
-CreateButton("🛒 Stock Watch : OFF", 0.73)
+CreateButton("🌱 Auto Pick : OFF", 0.05)
+CreateButton("💰 Auto Sell : OFF", 0.18)
+CreateButton("🍀 Auto Harvest : OFF", 0.31)
+CreateButton("🟡 Gold Seed : OFF", 0.44)
+CreateButton("🌈 Rainbow Seed : OFF", 0.57)
+CreateButton("🛒 Stock Watch : OFF", 0.70)
 
 -- Dragging Logic
 local Dragging, DragStart, StartPos
