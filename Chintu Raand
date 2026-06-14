@@ -4,12 +4,13 @@ local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
 local LocalPlayer = Players.LocalPlayer
 
--- UI Setup
+-- UI Setup (Panel visible rahe isliye Enabled true kiya)
 local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
 ScreenGui.Name = "ChintuRndy"
+ScreenGui.Enabled = true 
 
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 280, 0, 400)
+MainFrame.Size = UDim2.new(0, 280, 0, 420) -- Thoda size badhaya
 MainFrame.Position = UDim2.new(0.5, -140, 0.5, -200)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MainFrame.ClipsDescendants = true
@@ -44,13 +45,13 @@ MinBtn.Text = "-"
 local minimized = false
 MinBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
-    MainFrame.Size = minimized and UDim2.new(0, 280, 0, 40) or UDim2.new(0, 280, 0, 400)
+    MainFrame.Size = minimized and UDim2.new(0, 280, 0, 40) or UDim2.new(0, 280, 0, 420)
     ButtonContainer.Visible = not minimized
     MinBtn.Text = minimized and "+" or "-"
 end)
 
--- Automation States
-local states = {AutoPick=false, AutoSell=false, AutoHarvest=false, GoldSeed=false, RainbowSeed=false, StockWatch=false}
+-- Automation States (AutoBuy add kiya)
+local states = {AutoPick=false, AutoSell=false, AutoHarvest=false, AutoBuy=false, GoldSeed=false, RainbowSeed=false}
 
 local function CreateButton(text, y, stateKey)
     local Btn = Instance.new("TextButton", ButtonContainer)
@@ -68,39 +69,47 @@ local function CreateButton(text, y, stateKey)
     end)
 end
 
-CreateButton("🌱 Auto Pick : OFF", 0.05, "AutoPick")
-CreateButton("💰 Auto Sell : OFF", 0.18, "AutoSell")
-CreateButton("🍀 Auto Harvest : OFF", 0.31, "AutoHarvest")
-CreateButton("🟡 Gold Seed : OFF", 0.44, "GoldSeed")
-CreateButton("🌈 Rainbow Seed : OFF", 0.57, "RainbowSeed")
-CreateButton("🛒 Stock Watch : OFF", 0.70, "StockWatch")
+CreateButton("🌱 Auto Pick : OFF", 0.02, "AutoPick")
+CreateButton("💰 Auto Sell : OFF", 0.14, "AutoSell")
+CreateButton("🍀 Auto Harvest : OFF", 0.26, "AutoHarvest")
+CreateButton("🛒 Auto Buy : OFF", 0.38, "AutoBuy")
+CreateButton("🟡 Gold Seed : OFF", 0.50, "GoldSeed")
+CreateButton("🌈 Rainbow Seed : OFF", 0.62, "RainbowSeed")
 
 -- Automation Logic Loop
 RunService.Heartbeat:Connect(function()
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
     local hrp = LocalPlayer.Character.HumanoidRootPart
 
-    -- Anti-AFK
     VirtualUser:CaptureController()
     VirtualUser:ClickButton2(Vector2.new())
 
-    -- Auto Pick Logic
+    -- Auto Pick
     if states.AutoPick and workspace:FindFirstChild("Seeds") then
         for _, s in pairs(workspace.Seeds:GetChildren()) do
             if s:IsA("BasePart") then s.CFrame = hrp.CFrame end
         end
     end
 
-    -- Auto Harvest Logic
+    -- Auto Harvest
     if states.AutoHarvest and workspace:FindFirstChild("Plots") then
         for _, p in pairs(workspace.Plots:GetChildren()) do
             if p:FindFirstChild("ClickDetector") then fireclickdetector(p.ClickDetector) end
         end
     end
 
-    -- Auto Sell Logic
+    -- Auto Sell
     if states.AutoSell and workspace:FindFirstChild("Shop") and workspace.Shop:FindFirstChild("SellPart") then
         hrp.CFrame = workspace.Shop.SellPart.CFrame
+    end
+
+    -- Auto Buy (Video logic)
+    if states.AutoBuy then
+        local sam = workspace:FindFirstChild("Sam")
+        if sam and sam:FindFirstChild("ClickDetector") then
+            hrp.CFrame = sam.HumanoidRootPart.CFrame + Vector3.new(0, 0, 3)
+            fireclickdetector(sam.ClickDetector)
+        end
     end
 end)
 
