@@ -4,13 +4,13 @@ local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
 local LocalPlayer = Players.LocalPlayer
 
--- UI Setup (Panel visible rahe isliye Enabled true kiya)
+-- UI Setup
 local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
 ScreenGui.Name = "ChintuRndy"
 ScreenGui.Enabled = true 
 
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 280, 0, 420) -- Thoda size badhaya
+MainFrame.Size = UDim2.new(0, 280, 0, 420)
 MainFrame.Position = UDim2.new(0.5, -140, 0.5, -200)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MainFrame.ClipsDescendants = true
@@ -50,7 +50,7 @@ MinBtn.MouseButton1Click:Connect(function()
     MinBtn.Text = minimized and "+" or "-"
 end)
 
--- Automation States (AutoBuy add kiya)
+-- Automation States
 local states = {AutoPick=false, AutoSell=false, AutoHarvest=false, AutoBuy=false, GoldSeed=false, RainbowSeed=false}
 
 local function CreateButton(text, y, stateKey)
@@ -103,12 +103,28 @@ RunService.Heartbeat:Connect(function()
         hrp.CFrame = workspace.Shop.SellPart.CFrame
     end
 
-    -- Auto Buy (Video logic)
+    -- Auto Buy (Upgraded Sequential Logic)
     if states.AutoBuy then
         local sam = workspace:FindFirstChild("Sam")
-        if sam and sam:FindFirstChild("ClickDetector") then
-            hrp.CFrame = sam.HumanoidRootPart.CFrame + Vector3.new(0, 0, 3)
-            fireclickdetector(sam.ClickDetector)
+        local shopGui = LocalPlayer.PlayerGui:FindFirstChild("ShopGui") -- Yaha check karein agar naam 'ShopGui' hai
+        
+        if shopGui and shopGui.Enabled then
+            -- Shop GUI khula hai, button click karo
+            for _, btn in pairs(shopGui:GetDescendants()) do
+                if btn:IsA("TextButton") and (btn.Text:lower():find("buy") or btn.Text:lower():find("carrot")) then
+                    VirtualUser:Button1Down(Vector2.new(btn.AbsolutePosition.X, btn.AbsolutePosition.Y))
+                    VirtualUser:Button1Up(Vector2.new(btn.AbsolutePosition.X, btn.AbsolutePosition.Y))
+                    task.wait(0.5) 
+                end
+            end
+        elseif sam and sam:FindFirstChild("HumanoidRootPart") then
+            -- Shop band hai, NPC ke paas jao
+            local dist = (hrp.Position - sam.HumanoidRootPart.Position).Magnitude
+            if dist > 6 then
+                hrp.CFrame = sam.HumanoidRootPart.CFrame + Vector3.new(0, 0, 3)
+            elseif sam:FindFirstChild("ClickDetector") then
+                fireclickdetector(sam.ClickDetector)
+            end
         end
     end
 end)
