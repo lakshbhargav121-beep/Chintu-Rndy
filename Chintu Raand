@@ -1,132 +1,22 @@
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local AutoGold = CreateButton("🟡 Gold Seed : OFF",0.68)
+local AutoRainbow = CreateButton("🌈 Rainbow Seed : OFF",0.80)
+local AutoStock = CreateButton("🛒 Stock Watch : OFF",0.92)
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ChintuRndy"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = LocalPlayer.PlayerGui
+local gold = false
+local rainbow = false
+local stock = false
 
--- Main Frame
-local MainFrame = Instance.new("Frame")
-MainFrame.Parent = ScreenGui
-MainFrame.Size = UDim2.new(0, 280, 0, 320)
-MainFrame.Position = UDim2.new(0.5, -140, 0.5, -160)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.BorderSizePixel = 0
-
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
-
-local Stroke = Instance.new("UIStroke", MainFrame)
-Stroke.Color = Color3.fromRGB(255, 0, 0)
-Stroke.Thickness = 2
-
--- Gradient
-local Gradient = Instance.new("UIGradient", MainFrame)
-Gradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(25,25,25)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(45,45,45))
-}
-
--- Title Bar
-local TitleBar = Instance.new("Frame")
-TitleBar.Parent = MainFrame
-TitleBar.Size = UDim2.new(1,0,0,40)
-TitleBar.BackgroundColor3 = Color3.fromRGB(35,35,35)
-TitleBar.BorderSizePixel = 0
-
-Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0,12)
-
-local Title = Instance.new("TextLabel")
-Title.Parent = TitleBar
-Title.Size = UDim2.new(1,0,1,0)
-Title.BackgroundTransparency = 1
-Title.Text = "🔥 CHINTU RNDY"
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 18
-Title.TextColor3 = Color3.fromRGB(255,255,255)
-
--- Button Creator
-local function CreateButton(text,y)
-    local Btn = Instance.new("TextButton")
-    Btn.Parent = MainFrame
-    Btn.Size = UDim2.new(0.9,0,0,42)
-    Btn.Position = UDim2.new(0.05,0,y,0)
-    Btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    Btn.BorderSizePixel = 0
-    Btn.Text = text
-    Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 14
-    Btn.TextColor3 = Color3.fromRGB(255,255,255)
-
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,8)
-
-    local Stroke = Instance.new("UIStroke", Btn)
-    Stroke.Color = Color3.fromRGB(255,0,0)
-
-    return Btn
-end
-
-local AutoPick = CreateButton("🌱 Auto Pick : OFF",0.20)
-local AutoSell = CreateButton("💰 Auto Sell : OFF",0.38)
-local AutoHarvest = CreateButton("🍀 Auto Harvest : OFF",0.56)
-
--- Watermark
-local Watermark = Instance.new("TextLabel")
-Watermark.Parent = MainFrame
-Watermark.Size = UDim2.new(1,0,0,25)
-Watermark.Position = UDim2.new(0,0,1,-30)
-Watermark.BackgroundTransparency = 1
-Watermark.Text = "Made by Chintu Dad"
-Watermark.Font = Enum.Font.Gotham
-Watermark.TextSize = 12
-Watermark.TextColor3 = Color3.fromRGB(170,170,170)
-
--- Toggle Vars
-local picking = false
-local selling = false
-local harvesting = false
-
-AutoPick.MouseButton1Click:Connect(function()
-    picking = not picking
-    AutoPick.Text = "🌱 Auto Pick : "..(picking and "ON" or "OFF")
+AutoGold.MouseButton1Click:Connect(function()
+    gold = not gold
+    AutoGold.Text = "🟡 Gold Seed : "..(gold and "ON" or "OFF")
 end)
 
-AutoSell.MouseButton1Click:Connect(function()
-    selling = not selling
-    AutoSell.Text = "💰 Auto Sell : "..(selling and "ON" or "OFF")
+AutoRainbow.MouseButton1Click:Connect(function()
+    rainbow = not rainbow
+    AutoRainbow.Text = "🌈 Rainbow Seed : "..(rainbow and "ON" or "OFF")
 end)
 
-AutoHarvest.MouseButton1Click:Connect(function()
-    harvesting = not harvesting
-    AutoHarvest.Text = "🍀 Auto Harvest : "..(harvesting and "ON" or "OFF")
-end)
-
--- Dragging
-local UIS = game:GetService("UserInputService")
-local Dragging, DragStart, StartPos
-
-TitleBar.InputBegan:Connect(function(Input)
-    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-        Dragging = true
-        DragStart = Input.Position
-        StartPos = MainFrame.Position
-    end
-end)
-
-UIS.InputChanged:Connect(function(Input)
-    if Dragging and Input.UserInputType == Enum.UserInputType.MouseMovement then
-        local Delta = Input.Position - DragStart
-        MainFrame.Position = UDim2.new(
-            StartPos.X.Scale,
-            StartPos.X.Offset + Delta.X,
-            StartPos.Y.Scale,
-            StartPos.Y.Offset + Delta.Y
-        )
-    end
-end)
-
-UIS.InputEnded:Connect(function(Input)
-    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-        Dragging = false
-    end
+AutoStock.MouseButton1Click:Connect(function()
+    stock = not stock
+    AutoStock.Text = "🛒 Stock Watch : "..(stock and "ON" or "OFF")
 end)
