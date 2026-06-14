@@ -1,0 +1,50 @@
+-- Panel: Chintu Rndy
+local ScreenGui = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Name = "ChintuRndy"
+MainFrame.Size = UDim2.new(0, 200, 0, 250); MainFrame.Position = UDim2.new(0.1, 0, 0.1, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+
+local function createBtn(text, pos)
+    local btn = Instance.new("TextButton", MainFrame)
+    btn.Size = UDim2.new(0.9, 0, 0, 35); btn.Position = pos; btn.Text = text
+    return btn
+end
+
+local AutoPick = createBtn("Auto Pick: OFF", UDim2.new(0.05, 0, 0.1, 0))
+local AutoSell = createBtn("Auto Sell: OFF", UDim2.new(0.05, 0, 0.3, 0))
+local AutoHarvest = createBtn("Auto Mutation Harvest: OFF", UDim2.new(0.05, 0, 0.5, 0))
+
+local watermark = Instance.new("TextLabel", MainFrame)
+watermark.Text = "made by chintu dad"; watermark.Position = UDim2.new(0,0,0.85,0)
+watermark.Size = UDim2.new(1,0,0,20); watermark.TextColor3 = Color3.new(1,1,1)
+
+-- Toggle Variables
+local picking, selling, harvesting = false, false, false
+
+-- Logic Core
+game:GetService("RunService").Heartbeat:Connect(function()
+    if picking then
+        for _, v in pairs(workspace:GetChildren()) do
+            if v:IsA("Tool") or v.Name:find("Seed") then
+                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
+            end
+        end
+    end
+
+    if harvesting then
+        -- Yahan game specific folder "Plants" ya "Garden" ho sakta hai
+        for _, v in pairs(workspace.Plants:GetChildren()) do
+            if v:FindFirstChild("Mutation") and v.Mutation.Value == true then
+                -- Common Remote Names: Harvest, Pick, Interact
+                game.ReplicatedStorage.RemoteEvents.Harvest:FireServer(v)
+            end
+        end
+    end
+end)
+
+-- Button Click Handlers
+AutoPick.MouseButton1Click:Connect(function() picking = not picking; AutoPick.Text = "Auto Pick: " .. (picking and "ON" or "OFF") end)
+AutoSell.MouseButton1Click:Connect(function() selling = not selling; AutoSell.Text = "Auto Sell: " .. (selling and "ON" or "OFF") end)
+AutoHarvest.MouseButton1Click:Connect(function() harvesting = not harvesting; AutoHarvest.Text = "Auto Harvest: " .. (harvesting and "ON" or "OFF") end)
+
