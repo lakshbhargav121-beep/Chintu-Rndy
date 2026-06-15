@@ -3,28 +3,45 @@ local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
 local LocalPlayer = Players.LocalPlayer
 
--- UI SETUP
+-- UI SETUP (Original Style)
 local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-ScreenGui.Name = "ChintuAFK"
-ScreenGui.Enabled = true
+ScreenGui.Name = "ChintuRndy"
 
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 200, 0, 150)
-MainFrame.Position = UDim2.new(0.8, 0, 0.5, 0)
+MainFrame.Size = UDim2.new(0, 280, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -140, 0.5, -150) -- Center me
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.ClipsDescendants = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
 
-local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1,0,0,40)
-Title.Text = "🔥 CHINTU AFK"
-Title.Font = Enum.Font.GothamBold
-Title.TextColor3 = Color3.new(1,1,1)
-Title.BackgroundTransparency = 1
+local Stroke = Instance.new("UIStroke", MainFrame)
+Stroke.Color = Color3.fromRGB(255, 0, 0) -- Red Theme
+Stroke.Thickness = 2
 
--- States
+local TitleBar = Instance.new("Frame", MainFrame)
+TitleBar.Size = UDim2.new(1,0,0,40)
+TitleBar.BackgroundColor3 = Color3.fromRGB(35,35,35)
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0,12)
+
+local Title = Instance.new("TextLabel", TitleBar)
+Title.Size = UDim2.new(1,0,1,0)
+Title.BackgroundTransparency = 1
+Title.Text = "🔥 CHINTU RNDY"
+Title.Font = Enum.Font.GothamBold
+Title.TextColor3 = Color3.fromRGB(255,255,255)
+
+local Footer = Instance.new("TextLabel", MainFrame)
+Footer.Size = UDim2.new(1,0,0,30)
+Footer.Position = UDim2.new(0,0,1,-30)
+Footer.BackgroundTransparency = 1
+Footer.Text = "Made by Chintu Dad Aka Laksh"
+Footer.TextColor3 = Color3.fromRGB(150, 150, 150)
+Footer.TextSize = 12
+Footer.Font = Enum.Font.Gotham
+
+-- Buttons
 local states = {AutoGrab=false, AntiAFK=false}
 
--- Button Creator
 local function CreateButton(text, y, stateKey)
     local Btn = Instance.new("TextButton", MainFrame)
     Btn.Size = UDim2.new(0.8,0,0,40)
@@ -32,7 +49,7 @@ local function CreateButton(text, y, stateKey)
     Btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
     Btn.Text = text
     Btn.TextColor3 = Color3.new(1,1,1)
-    Instance.new("UICorner", Btn)
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,8)
     
     Btn.MouseButton1Click:Connect(function()
         states[stateKey] = not states[stateKey]
@@ -40,42 +57,38 @@ local function CreateButton(text, y, stateKey)
     end)
 end
 
-CreateButton("🌱 Auto Grab : OFF", 0.3, "AutoGrab")
-CreateButton("🚶 Anti-AFK : OFF", 0.6, "AntiAFK")
+CreateButton("🌱 Auto Grab : OFF", 0.25, "AutoGrab")
+CreateButton("🚶 Anti-AFK : OFF", 0.50, "AntiAFK")
 
--- MAIN LOOP
+-- LOGIC
 RunService.Heartbeat:Connect(function()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local hrp = char.HumanoidRootPart
-    local humanoid = char.Humanoid
-
-    -- 1. Anti-AFK Idle Protection
-    VirtualUser:CaptureController()
-    VirtualUser:ClickButton2(Vector2.new())
-
-    -- 2. Auto Grab Logic
+    
+    -- Auto Grab Logic
     if states.AutoGrab then
         local seeds = workspace:FindFirstChild("Seeds") or workspace:FindFirstChild("DroppedItems")
         if seeds then
             for _, s in pairs(seeds:GetChildren()) do
                 local target = (s:IsA("BasePart") and s) or (s:FindFirstChild("Handle"))
                 if target then
-                    humanoid:MoveTo(target.Position)
-                    if (hrp.Position - target.Position).Magnitude < 4 then
-                        firetouchinterest(hrp, target, 0)
-                        firetouchinterest(hrp, target, 1)
+                    char.Humanoid:MoveTo(target.Position)
+                    if (char.HumanoidRootPart.Position - target.Position).Magnitude < 4 then
+                        firetouchinterest(char.HumanoidRootPart, target, 0)
+                        firetouchinterest(char.HumanoidRootPart, target, 1)
                     end
                 end
             end
         end
     end
 
-    -- 3. Anti-AFK Random Movement Logic
+    -- Anti-AFK Wandering
     if states.AntiAFK then
-        if tick() % 20 < 0.1 then -- Har 20 seconds mein move karega
-            local randomPos = Vector3.new(math.random(-20, 20), 0, math.random(-20, 20))
-            humanoid:MoveTo(hrp.Position + randomPos)
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+        if tick() % 15 < 0.1 then 
+            local randomPos = Vector3.new(math.random(-15, 15), 0, math.random(-15, 15))
+            char.Humanoid:MoveTo(char.HumanoidRootPart.Position + randomPos)
         end
     end
 end)
