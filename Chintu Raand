@@ -1,67 +1,38 @@
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
 local LocalPlayer = Players.LocalPlayer
 
--- UI Setup
+-- UI SETUP
 local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-ScreenGui.Name = "ChintuRndy"
-ScreenGui.Enabled = true 
+ScreenGui.Name = "ChintuAFK"
+ScreenGui.Enabled = true
 
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 280, 0, 420)
-MainFrame.Position = UDim2.new(0.5, -140, 0.5, -200)
+MainFrame.Size = UDim2.new(0, 200, 0, 150)
+MainFrame.Position = UDim2.new(0.8, 0, 0.5, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.ClipsDescendants = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
 
-local Stroke = Instance.new("UIStroke", MainFrame)
-Stroke.Color = Color3.fromRGB(255, 0, 0)
-Stroke.Thickness = 2
-
-local TitleBar = Instance.new("Frame", MainFrame)
-TitleBar.Size = UDim2.new(1,0,0,40)
-TitleBar.BackgroundColor3 = Color3.fromRGB(35,35,35)
-Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0,12)
-
-local Title = Instance.new("TextLabel", TitleBar)
-Title.Size = UDim2.new(1,-40,1,0)
-Title.BackgroundTransparency = 1
-Title.Text = "🔥 CHINTU RNDY"
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1,0,0,40)
+Title.Text = "🔥 CHINTU AFK"
 Title.Font = Enum.Font.GothamBold
-Title.TextColor3 = Color3.fromRGB(255,255,255)
+Title.TextColor3 = Color3.new(1,1,1)
+Title.BackgroundTransparency = 1
 
-local ButtonContainer = Instance.new("Frame", MainFrame)
-ButtonContainer.Size = UDim2.new(1, 0, 1, -40)
-ButtonContainer.Position = UDim2.new(0, 0, 0, 40)
-ButtonContainer.BackgroundTransparency = 1
+-- States
+local states = {AutoGrab=false, AntiAFK=false}
 
-local MinBtn = Instance.new("TextButton", TitleBar)
-MinBtn.Size = UDim2.new(0, 30, 0, 30)
-MinBtn.Position = UDim2.new(1, -35, 0, 5)
-MinBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-MinBtn.Text = "-"
-local minimized = false
-MinBtn.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    MainFrame.Size = minimized and UDim2.new(0, 280, 0, 40) or UDim2.new(0, 280, 0, 420)
-    ButtonContainer.Visible = not minimized
-    MinBtn.Text = minimized and "+" or "-"
-end)
-
--- Automation States
-local states = {AutoPick=false, AutoSell=false, AutoHarvest=false, AutoBuy=false, GoldSeed=false, RainbowSeed=false}
-
+-- Button Creator
 local function CreateButton(text, y, stateKey)
-    local Btn = Instance.new("TextButton", ButtonContainer)
-    Btn.Size = UDim2.new(0.9,0,0,35)
-    Btn.Position = UDim2.new(0.05,0,y,0)
+    local Btn = Instance.new("TextButton", MainFrame)
+    Btn.Size = UDim2.new(0.8,0,0,40)
+    Btn.Position = UDim2.new(0.1,0,y,0)
     Btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
     Btn.Text = text
-    Btn.Font = Enum.Font.GothamBold
-    Btn.TextColor3 = Color3.fromRGB(255,255,255)
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,8)
+    Btn.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", Btn)
     
     Btn.MouseButton1Click:Connect(function()
         states[stateKey] = not states[stateKey]
@@ -69,85 +40,42 @@ local function CreateButton(text, y, stateKey)
     end)
 end
 
-CreateButton("🌱 Auto Pick : OFF", 0.02, "AutoPick")
-CreateButton("💰 Auto Sell : OFF", 0.14, "AutoSell")
-CreateButton("🍀 Auto Harvest : OFF", 0.26, "AutoHarvest")
-CreateButton("🛒 Auto Buy : OFF", 0.38, "AutoBuy")
-CreateButton("🟡 Gold Seed : OFF", 0.50, "GoldSeed")
-CreateButton("🌈 Rainbow Seed : OFF", 0.62, "RainbowSeed")
+CreateButton("🌱 Auto Grab : OFF", 0.3, "AutoGrab")
+CreateButton("🚶 Anti-AFK : OFF", 0.6, "AntiAFK")
 
--- Automation Logic Loop
+-- MAIN LOOP
 RunService.Heartbeat:Connect(function()
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-    local hrp = LocalPlayer.Character.HumanoidRootPart
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
+    local humanoid = char.Humanoid
 
+    -- 1. Anti-AFK Idle Protection
     VirtualUser:CaptureController()
     VirtualUser:ClickButton2(Vector2.new())
 
-    -- Auto Pick
-    if states.AutoPick and workspace:FindFirstChild("Seeds") then
-        for _, s in pairs(workspace.Seeds:GetChildren()) do
-            if s:IsA("BasePart") then s.CFrame = hrp.CFrame end
-        end
-    end
-
-    -- Auto Harvest
-    if states.AutoHarvest and workspace:FindFirstChild("Plots") then
-        for _, p in pairs(workspace.Plots:GetChildren()) do
-            if p:FindFirstChild("ClickDetector") then fireclickdetector(p.ClickDetector) end
-        end
-    end
-
-    -- Auto Sell
-    if states.AutoSell and workspace:FindFirstChild("Shop") and workspace.Shop:FindFirstChild("SellPart") then
-        hrp.CFrame = workspace.Shop.SellPart.CFrame
-    end
-
-    -- Auto Buy (Upgraded Sequential Logic)
-    if states.AutoBuy then
-        local sam = workspace:FindFirstChild("Sam")
-        local shopGui = LocalPlayer.PlayerGui:FindFirstChild("ShopGui") -- Yaha check karein agar naam 'ShopGui' hai
-        
-        if shopGui and shopGui.Enabled then
-            -- Shop GUI khula hai, button click karo
-            for _, btn in pairs(shopGui:GetDescendants()) do
-                if btn:IsA("TextButton") and (btn.Text:lower():find("buy") or btn.Text:lower():find("carrot")) then
-                    VirtualUser:Button1Down(Vector2.new(btn.AbsolutePosition.X, btn.AbsolutePosition.Y))
-                    VirtualUser:Button1Up(Vector2.new(btn.AbsolutePosition.X, btn.AbsolutePosition.Y))
-                    task.wait(0.5) 
+    -- 2. Auto Grab Logic
+    if states.AutoGrab then
+        local seeds = workspace:FindFirstChild("Seeds") or workspace:FindFirstChild("DroppedItems")
+        if seeds then
+            for _, s in pairs(seeds:GetChildren()) do
+                local target = (s:IsA("BasePart") and s) or (s:FindFirstChild("Handle"))
+                if target then
+                    humanoid:MoveTo(target.Position)
+                    if (hrp.Position - target.Position).Magnitude < 4 then
+                        firetouchinterest(hrp, target, 0)
+                        firetouchinterest(hrp, target, 1)
+                    end
                 end
             end
-        elseif sam and sam:FindFirstChild("HumanoidRootPart") then
-            -- Shop band hai, NPC ke paas jao
-            local dist = (hrp.Position - sam.HumanoidRootPart.Position).Magnitude
-            if dist > 6 then
-                hrp.CFrame = sam.HumanoidRootPart.CFrame + Vector3.new(0, 0, 3)
-            elseif sam:FindFirstChild("ClickDetector") then
-                fireclickdetector(sam.ClickDetector)
-            end
         end
     end
-end)
 
--- Dragging Logic
-local Dragging, DragStart, StartPos
-TitleBar.InputBegan:Connect(function(Input)
-    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-        Dragging = true
-        DragStart = Input.Position
-        StartPos = MainFrame.Position
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(Input)
-    if Dragging and Input.UserInputType == Enum.UserInputType.MouseMovement then
-        local Delta = Input.Position - DragStart
-        MainFrame.Position = UDim2.new(StartPos.X.Scale, StartPos.X.Offset + Delta.X, StartPos.Y.Scale, StartPos.Y.Offset + Delta.Y)
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(Input)
-    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-        Dragging = false
+    -- 3. Anti-AFK Random Movement Logic
+    if states.AntiAFK then
+        if tick() % 20 < 0.1 then -- Har 20 seconds mein move karega
+            local randomPos = Vector3.new(math.random(-20, 20), 0, math.random(-20, 20))
+            humanoid:MoveTo(hrp.Position + randomPos)
+        end
     end
 end)
