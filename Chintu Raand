@@ -2,19 +2,28 @@ local Players, RunService = game:GetService("Players"), game:GetService("RunServ
 local VirtualInputManager, ReplicatedStorage = game:GetService("VirtualInputManager"), game:GetService("ReplicatedStorage")
 local CollectionService, LocalPlayer = game:GetService("CollectionService"), Players.LocalPlayer
 
--- UI SETUP (Minimal)
+-- UI SETUP (Chintu Rndy Theme 🍑)
 local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size, MainFrame.Position = UDim2.new(0, 180, 0, 240), UDim2.new(0.5, -90, 0.5, -120)
+MainFrame.Size = UDim2.new(0, 180, 0, 240)
+MainFrame.Position = UDim2.new(0.5, -90, 0.5, -120)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
 Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(255, 0, 0)
 
--- GLOBAL STORAGE FOR HOOKED DATA
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Text = " CHINTU RNDY 🍑"
+Title.Font = Enum.Font.GothamBold
+Title.TextColor3 = Color3.new(1,1,1)
+Title.BackgroundTransparency = 1
+
+-- GLOBAL STORAGE
 local HookedRemote, HookedArgs = nil, nil
 local states = {AutoGrab=false, AutoHarvest=false, AutoPlant=false, AntiAFK=false}
+local LastInteracted = {} -- Fix for menu spamming
 
--- 1. METHOD HOOKING: Yeh game ke asli Remote ko capture karega
+-- 1. METHOD HOOKING
 local mt = getrawmetatable(game)
 local oldNamecall = mt.__namecall
 setreadonly(mt, false)
@@ -28,7 +37,7 @@ mt.__namecall = newcclosure(function(self, ...)
 end)
 setreadonly(mt, true)
 
--- 2. SMART CACHING (Tagging)
+-- 2. SMART CACHING
 local function TagObject(v)
     if v:IsA("ClickDetector") or v:IsA("ProximityPrompt") then
         CollectionService:AddTag(v, "Interactable")
@@ -37,13 +46,15 @@ end
 for _, v in pairs(workspace:GetDescendants()) do TagObject(v) end
 workspace.DescendantAdded:Connect(TagObject)
 
--- 3. INTERACTION ENGINE
+-- 3. INTERACTION ENGINE (Debounced)
 local function Trigger(obj)
+    -- Debounce: Agar object pe pichle 3 sec mein interact kiya hai, toh dubara mat karo
+    if LastInteracted[obj] and (os.clock() - LastInteracted[obj] < 3) then return end
+    LastInteracted[obj] = os.clock()
+
     if HookedRemote then
-        -- Agar humne Remote capture kar liya hai, to use hi use karenge
         HookedRemote:FireServer(unpack(HookedArgs))
     else
-        -- Fallback
         if obj:IsA("ClickDetector") then fireclickdetector(obj)
         elseif obj:IsA("ProximityPrompt") then fireproximityprompt(obj)
         else 
@@ -57,24 +68,27 @@ end
 -- 4. BUTTONS
 local function CreateButton(text, y, stateKey)
     local Btn = Instance.new("TextButton", MainFrame)
-    Btn.Size, Btn.Position = UDim2.new(0.8, 0, 0, 35), UDim2.new(0.1, 0, 0, y)
+    Btn.Size = UDim2.new(0.8, 0, 0, 35)
+    Btn.Position = UDim2.new(0.1, 0, 0, y)
+    Btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     Btn.Text = text
+    Btn.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
     Btn.MouseButton1Click:Connect(function()
         states[stateKey] = not states[stateKey]
         Btn.Text = text:split(":")[1] .. ": " .. (states[stateKey] and "ON" or "OFF")
     end)
 end
-CreateButton("🌱 Grab: OFF", 15, "AutoGrab")
-CreateButton("🍀 Harv: OFF", 60, "AutoHarvest")
-CreateButton("🚜 Plant: OFF", 105, "AutoPlant")
-CreateButton("🚶 AFK: OFF", 150, "AntiAFK")
+CreateButton("🌱 Grab: OFF", 40, "AutoGrab")
+CreateButton("🍀 Harv: OFF", 80, "AutoHarvest")
+CreateButton("🚜 Plant: OFF", 120, "AutoPlant")
+CreateButton("🚶 AFK: OFF", 160, "AntiAFK")
 
--- MAIN LOOP (Optimized)
+-- MAIN LOOP
 RunService.Heartbeat:Connect(function()
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    -- Auto Grab
     if states.AutoGrab then
         for _, v in pairs(workspace:GetDescendants()) do
             if v:IsA("TouchTransmitter") and v.Parent.Name:lower():find("seed") then
@@ -84,12 +98,17 @@ RunService.Heartbeat:Connect(function()
         end
     end
 
-    -- Harvest & Plant (Triggering based on learned logic)
     if states.AutoHarvest or states.AutoPlant then
         for _, obj in pairs(CollectionService:GetTagged("Interactable")) do
             local pos = (obj.Parent:IsA("Model") and obj.Parent:GetPivot().Position) or obj.Parent.Position
-            if (hrp.Position - pos).Magnitude < 15 then
-                Trigger(obj)
+            if (hrp.Position - pos).Magnitude < 12 then
+                -- Check if it's correct type
+                local isReady = obj.Parent.Name:lower():find("ready")
+                local isPlot = obj.Parent.Name:lower():find("plot")
+                
+                if (states.AutoHarvest and isReady) or (states.AutoPlant and isPlot and not isReady) then
+                    Trigger(obj)
+                end
             end
         end
     end
