@@ -3,13 +3,13 @@ local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
 local LocalPlayer = Players.LocalPlayer
 
--- UI SETUP (Super Compact Style)
+-- UI SETUP
 local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
 ScreenGui.Name = "ChintuRndy"
 
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 160, 0, 150) -- Width aur Height kam ki
-MainFrame.Position = UDim2.new(0.5, -80, 0.5, -75)
+MainFrame.Size = UDim2.new(0, 160, 0, 220) -- Size badhaya buttons ke liye
+MainFrame.Position = UDim2.new(0.5, -80, 0.5, -110)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MainFrame.ClipsDescendants = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
@@ -26,12 +26,16 @@ Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0,8)
 local Title = Instance.new("TextLabel", TitleBar)
 Title.Size = UDim2.new(1,-25,1,0)
 Title.BackgroundTransparency = 1
-Title.Text = "🔥 CHINTU"
+Title.Text = "🔥 CHINTU RNDY 🍑"
 Title.Font = Enum.Font.GothamBold
 Title.TextColor3 = Color3.fromRGB(255,255,255)
 Title.TextSize = 12
 
--- Minimize Button
+local ButtonContainer = Instance.new("Frame", MainFrame)
+ButtonContainer.Size = UDim2.new(1,0,1,-25)
+ButtonContainer.Position = UDim2.new(0,0,0,25)
+ButtonContainer.BackgroundTransparency = 1
+
 local MinBtn = Instance.new("TextButton", TitleBar)
 MinBtn.Size = UDim2.new(0, 25, 0, 25)
 MinBtn.Position = UDim2.new(1, -25, 0, 0)
@@ -41,25 +45,17 @@ MinBtn.TextColor3 = Color3.new(1,1,1)
 local minimized = false
 MinBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
-    MainFrame.Size = minimized and UDim2.new(0, 160, 0, 25) or UDim2.new(0, 160, 0, 150)
+    MainFrame.Size = minimized and UDim2.new(0, 160, 0, 25) or UDim2.new(0, 160, 0, 220)
+    ButtonContainer.Visible = not minimized
     MinBtn.Text = minimized and "+" or "-"
 end)
 
-local Footer = Instance.new("TextLabel", MainFrame)
-Footer.Size = UDim2.new(1,0,0,15)
-Footer.Position = UDim2.new(0,0,1,-15)
-Footer.BackgroundTransparency = 1
-Footer.Text = "By Laksh"
-Footer.TextColor3 = Color3.fromRGB(150, 150, 150)
-Footer.TextSize = 8
-
--- Buttons (Compact)
-local states = {AutoGrab=false, AntiAFK=false}
+local states = {AutoGrab=false, AutoHarvest=false, AutoPlant=false, AntiAFK=false}
 
 local function CreateButton(text, y, stateKey)
-    local Btn = Instance.new("TextButton", MainFrame)
+    local Btn = Instance.new("TextButton", ButtonContainer)
     Btn.Size = UDim2.new(0.8,0,0,30)
-    Btn.Position = UDim2.new(0.1,0,y,0)
+    Btn.Position = UDim2.new(0.1,0,0,y)
     Btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
     Btn.Text = text
     Btn.TextColor3 = Color3.new(1,1,1)
@@ -72,36 +68,54 @@ local function CreateButton(text, y, stateKey)
     end)
 end
 
-CreateButton("🌱 Grab: OFF", 0.25, "AutoGrab")
-CreateButton("🚶 AFK: OFF", 0.55, "AntiAFK")
+CreateButton("🌱 AUTO Grab: OFF", 10, "AutoGrab")
+CreateButton("🍀 AUTO HARVEST: OFF", 45, "AutoHarvest")
+CreateButton("🚜 AUTO Plant: OFF", 80, "AutoPlant")
+CreateButton("🚶 ANTI AFK: OFF", 115, "AntiAFK")
 
--- LOGIC
 RunService.Heartbeat:Connect(function()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
     
+    -- Grab
     if states.AutoGrab then
         local seeds = workspace:FindFirstChild("Seeds") or workspace:FindFirstChild("DroppedItems")
         if seeds then
             for _, s in pairs(seeds:GetChildren()) do
-                local target = (s:IsA("BasePart") and s) or (s:FindFirstChild("Handle"))
-                if target then
-                    char.Humanoid:MoveTo(target.Position)
-                    if (char.HumanoidRootPart.Position - target.Position).Magnitude < 4 then
-                        firetouchinterest(char.HumanoidRootPart, target, 0)
-                        firetouchinterest(char.HumanoidRootPart, target, 1)
-                    end
+                if s:IsA("BasePart") then
+                    char.Humanoid:MoveTo(s.Position)
+                    firetouchinterest(char.HumanoidRootPart, s, 0)
+                    firetouchinterest(char.HumanoidRootPart, target, 1)
                 end
             end
         end
     end
 
+    -- Harvest & Plant Logic
+    if (states.AutoHarvest or states.AutoPlant) and workspace:FindFirstChild("Plots") then
+        for _, p in pairs(workspace.Plots:GetChildren()) do
+            -- Logic: Agar crop ready hai toh harvest
+            if states.AutoHarvest and p:FindFirstChild("ReadyToHarvest") and p.ReadyToHarvest.Value == true then
+                char.Humanoid:MoveTo(p.Position)
+                if (char.HumanoidRootPart.Position - p.Position).Magnitude < 5 then
+                    fireclickdetector(p.ClickDetector)
+                end
+            -- Logic: Agar plot khali hai toh plant
+            elseif states.AutoPlant and p:FindFirstChild("Empty") and p.Empty.Value == true then
+                char.Humanoid:MoveTo(p.Position)
+                if (char.HumanoidRootPart.Position - p.Position).Magnitude < 5 then
+                    fireclickdetector(p.ClickDetector)
+                end
+            end
+        end
+    end
+
+    -- AFK
     if states.AntiAFK then
         VirtualUser:CaptureController()
         VirtualUser:ClickButton2(Vector2.new())
         if tick() % 15 < 0.1 then 
-            local randomPos = Vector3.new(math.random(-15, 15), 0, math.random(-15, 15))
-            char.Humanoid:MoveTo(char.HumanoidRootPart.Position + randomPos)
+            char.Humanoid:MoveTo(char.HumanoidRootPart.Position + Vector3.new(math.random(-15,15),0,math.random(-15,15)))
         end
     end
 end)
